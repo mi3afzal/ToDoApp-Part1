@@ -16,7 +16,7 @@ class AppTestCase(unittest.TestCase):
     def test_index(self):
         response = self.app.get('/', content_type='html/text')
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b'Hello World', response.data)
+        self.assertIn(b'To Do App Interface', response.data)
 
 
 
