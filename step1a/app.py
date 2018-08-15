@@ -16,9 +16,9 @@ def index():
 @app.route("/todo/api/v1.0/tasks", methods = ['GET'])
 def get_all_tasks():
     data = []
-    db_task = mongo.db.tasks.find()
-    if db_task.count() > 0:
-        for task in db_task:
+    db_task = mongo.db.tasks
+    if db_task.count_documents({}) > 0:
+        for task in db_task.find():
             data.append({"id": str(task["_id"]), "title": task["title"], "description": task["description"], "done": task["done"]})
     return jsonify({'tasks':data})
 
@@ -33,8 +33,8 @@ def get_task(task_id):
 
 @app.route("/todo/api/v1.0/tasks", methods = ['POST'])
 def create_tasks():
-    title = request.json["title"]
-    description = request.json['description']
+    title = request.json.get("title", '')
+    description = request.json.get('description', '')
 
     db_task = mongo.db.tasks
     new_task_id = db_task.insert({"title": title, "description": description, "done": False}) # bool()
