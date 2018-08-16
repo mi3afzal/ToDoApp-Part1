@@ -56,15 +56,47 @@ class AppTestCase(unittest.TestCase):
         task_id = json_response['id']
         self.assertIsNotNone(task_id)
 
+        # get and check created task
         response = self.app.get('/todo/api/v1.0/tasks/'+task_id, content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Unit Test', response.data)
         json_response = json.loads(response.get_data(as_text=True))
         self.assertEqual(json_response['tasks'][0]['done'], False)
 
+        # now delete created task
         json_response = self.delete_task(task_id)
         self.assertEqual(json_response['status'], 'success')
 
+    def test_update_task(self):
+        # create a task first
+        json_response = self.create_task('update')
+        task_id = json_response['id']
+        self.assertIsNotNone(task_id)
+
+        # get and check created task
+        response = self.app.put('/todo/api/v1.0/tasks/'+task_id, content_type='application/json',
+                                data=json.dumps({"done": True}))
+        self.assertEqual(response.status_code, 200)
+        json_response = json.loads(response.get_data(as_text=True))
+        self.assertEqual(json_response['response']['status'], 'success')
+
+        # now delete created task
+        json_response = self.delete_task(task_id)
+        self.assertEqual(json_response['status'], 'success')
+
+    def test_delete_task(self):
+        # create a task first
+        json_response = self.create_task('delete')
+        task_id = json_response['id']
+        self.assertIsNotNone(task_id)
+
+        # now delete created task
+        json_response = self.delete_task(task_id)
+        self.assertEqual(json_response['status'], 'success')
+
+        # now delete task again, there should be error 404
+        json_response = self.delete_task(task_id)
+        self.assertEqual(json_response['status'], 'error')
 
 if __name__ == '__main__':
     unittest.main()
