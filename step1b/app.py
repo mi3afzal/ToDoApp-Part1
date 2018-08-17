@@ -1,11 +1,27 @@
 from flask import Flask, request, jsonify, json
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.config['MONGO_DBNAME'] = 'todoapp'
 app.config['MONGO_URI'] = 'mongodb://todoapp:pass123@ds219832.mlab.com:19832/todoapp'
 mongo = PyMongo(app)
+
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://irfan:@localhost/irfan'
+db = SQLAlchemy(app)
+
+
+# Create our database model
+class Tasks(db.Model):
+    __tablename__ = "tasks"
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100))
+    description = db.Column(db.String(255))
+    done = db.Column(db.String(5))
+
+
 
 @app.route("/")
 def index():
