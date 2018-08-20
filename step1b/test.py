@@ -26,7 +26,7 @@ class AppTestCase(unittest.TestCase):
         return json.loads(response.get_data(as_text=True))
 
     def delete_task(self, task_id):
-        response = self.app.delete('/todo/api/v1.0/tasks/'+task_id, content_type='application/json')
+        response = self.app.delete('/todo/api/v1.0/tasks/'+str(task_id), content_type='application/json')
         json_response = json.loads(response.get_data(as_text=True))
         return json_response['response']
 
@@ -57,7 +57,7 @@ class AppTestCase(unittest.TestCase):
         self.assertIsNotNone(task_id)
 
         # get and check created task
-        response = self.app.get('/todo/api/v1.0/tasks/'+task_id, content_type='application/json')
+        response = self.app.get('/todo/api/v1.0/tasks/'+str(task_id), content_type='application/json')
         self.assertEqual(response.status_code, 200)
         self.assertIn(b'Unit Test', response.data)
         json_response = json.loads(response.get_data(as_text=True))
@@ -74,7 +74,7 @@ class AppTestCase(unittest.TestCase):
         self.assertIsNotNone(task_id)
 
         # get and check created task
-        response = self.app.put('/todo/api/v1.0/tasks/'+task_id, content_type='application/json',
+        response = self.app.put('/todo/api/v1.0/tasks/'+str(task_id), content_type='application/json',
                                 data=json.dumps({"done": True}))
         self.assertEqual(response.status_code, 200)
         json_response = json.loads(response.get_data(as_text=True))

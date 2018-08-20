@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, json
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
+
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -18,9 +19,16 @@ class Tasks(db.Model):
     __tablename__ = "tasks"
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100))
-    description = db.Column(db.String(255))
-    done = db.Column(db.String(5))
+    description = db.Column(db.Text)
+    done = db.Column(db.Boolean, default=False)
 
+    def __init__(self, title, description, done=False):
+        self.title = title
+        self.description = description
+        self.done = done
+
+    def __repr__(self):
+        return '<id {}>'.format(self.id)
 
 
 @app.route("/")
@@ -32,18 +40,31 @@ def index():
 @app.route("/todo/api/v1.0/tasks", methods = ['GET'])
 def get_all_tasks():
     data = []
-    db_task = mongo.db.tasks
-    if db_task.count_documents({}) > 0:
-        for task in db_task.find():
-            data.append({"id": str(task["_id"]), "title": task["title"], "description": task["description"], "done": task["done"]})
+    db_task = Tasks.query.all()
+    if db_task:
+        for task in db_task:
+            data.append({
+                "id": task.id,
+                "title": task.title,
+                "description": task.description,
+                "done": task.done
+            })
     return jsonify({'tasks':data})
 
 
 @app.route("/todo/api/v1.0/tasks/<task_id>", methods = ['GET'])
 def get_task(task_id):
     data = []
-    task = mongo.db.tasks.find_one_or_404({"_id": ObjectId(task_id)})
-    data.append({"id": str(task["_id"]), "title": task["title"], "description": task["description"], "done": task["done"]})
+    task = Tasks.query.filter_by(id=task_id).first()
+    if task:
+        data.append({
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "done": task.done
+        })
+    else:
+        response = {'status': 'error', 'status_code': '404', 'message': 'Task not Found'}
     return jsonify({'tasks':data})
 
 
@@ -52,34 +73,36 @@ def create_tasks():
     title = request.json.get("title", '')
     description = request.json.get('description', '')
 
-    db_task = mongo.db.tasks
-    new_task_id = db_task.insert({"title": title, "description": description, "done": False}) # bool()
-    return jsonify({"id": str(new_task_id)})
+    task = Tasks(title, description)
+    db.session.add(task)
+    db.session.commit()
+
+    return jsonify({"id": task.id})
 
 
-@app.route("/todo/api/v1.0/tasks/<ObjectId:task_id>", methods = ['PUT'])
+@app.route("/todo/api/v1.0/tasks/<task_id>", methods=['PUT'])
 def update_task(task_id):
-    db_task = mongo.db.tasks
-    task = db_task.find_one_or_404({"_id": task_id})
-
-    title = request.json.get("title", task["title"])
-    description = request.json.get('description', task["description"])
-    done = bool(request.json.get("done", task["done"]))
-
-    task["title"] = title
-    task["description"] = description
-    task["done"] = done
-    db_task.save(task)
-    response = {'status': 'success', 'status_code': '200', 'message': 'Task Updated'}
-
+    task = Tasks.query.filter_by(id=task_id).first()
+    if task:
+        task.title = request.json.get("title", task.title)
+        task.description = request.json.get('description', task.description)
+        task.done = bool(request.json.get("done", task.done))
+        db.session.commit()
+        response = {'status': 'success', 'status_code': '200', 'message': 'Task Updated'}
+    else:
+        response = {'status': 'error', 'status_code': '404', 'message': 'Task not Found'}
     return jsonify({'response': response})
 
 
-@app.route("/todo/api/v1.0/tasks/<ObjectId:task_id>", methods = ['DELETE'])
+@app.route("/todo/api/v1.0/tasks/<task_id>", methods = ['DELETE'])
 def delete_task(task_id):
-    mongo.db.tasks.find_one_or_404({"_id": task_id})
-    mongo.db.tasks.delete_one({"_id": task_id})
-    response = {'status': 'success', 'status_code': '200', 'message': 'Task Deleted'}
+    task = Tasks.query.filter_by(id=task_id).first()
+    if task:
+        db.session.delete(task)
+        db.session.commit()
+        response = {'status': 'success', 'status_code': '200', 'message': 'Task Deleted'}
+    else:
+        response = {'status': 'error', 'status_code': '404', 'message': 'Task not Found'}
     return jsonify({'response': response})
 
 
