@@ -10,7 +10,7 @@ app.config['MONGO_URI'] = 'mongodb://todoapp:pass123@ds219832.mlab.com:19832/tod
 mongo = PyMongo(app)
 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://irfan:@localhost/irfan'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://srbxlsob:s8cSQ4U_nm7vaXL9hW9QZLHxq-0R6wlp@horton.elephantsql.com:5432/srbxlsob'
 db = SQLAlchemy(app)
 
 
